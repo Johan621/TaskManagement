@@ -6,6 +6,35 @@
   background: #f5f7fb;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --page-bg: #f5f7fb;
+  --surface: #ffffff;
+  --text: #172033;
+  --muted: #6b7488;
+  --border: #e4e8f0;
+  --control-border: #d5dbea;
+  --primary: #5367e8;
+  --primary-text: #ffffff;
+  --secondary-bg: #eef1f7;
+  --secondary-text: #33405b;
+  --danger-bg: #fff0f0;
+  --danger-text: #c43f3f;
+  --shadow: 0 8px 24px rgba(22, 35, 65, 0.06);
+}
+
+:root[data-theme='dark'] {
+  --page-bg: #111827;
+  --surface: #1a2233;
+  --text: #edf2ff;
+  --muted: #a9b2c5;
+  --border: #2d394f;
+  --control-border: #39465f;
+  --primary: #7082ff;
+  --primary-text: #0d1320;
+  --secondary-bg: #2a3448;
+  --secondary-text: #edf2ff;
+  --danger-bg: #3a2328;
+  --danger-text: #ff9fa9;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 * {
@@ -16,7 +45,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #f5f7fb;
+  background: var(--page-bg);
+  color: var(--text);
+  transition: background 0.2s, color 0.2s;
 }
 
 button,
@@ -38,8 +69,8 @@ button {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(255, 255, 255, 0.94);
-  border-bottom: 1px solid #e4e8f0;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border-bottom: 1px solid var(--border);
   backdrop-filter: blur(10px);
 }
 
@@ -53,10 +84,16 @@ button {
   gap: 16px;
 }
 
+.navbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .brand-button {
   background: transparent;
   cursor: pointer;
-  color: #1d2840;
+  color: var(--text);
   font-weight: 700;
   font-size: 19px;
   padding: 8px 0;
@@ -94,13 +131,13 @@ button {
   margin: 0 0 6px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #68738b;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 700;
 }
 
 .muted-text {
-  color: #6b7488;
+  color: var(--muted);
   margin: 10px 0 0;
 }
 
@@ -116,9 +153,9 @@ button {
 .task-section,
 .filters-card,
 .task-card {
-  background: #fff;
-  border: 1px solid #e4e8f0;
-  box-shadow: 0 8px 24px rgba(22, 35, 65, 0.06);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 .analytics-card {
@@ -130,12 +167,12 @@ button {
 }
 
 .analytics-card span {
-  color: #6b7488;
+  color: var(--muted);
   font-size: 13px;
 }
 
 .analytics-card strong {
-  color: #1d2840;
+  color: var(--text);
   font-size: 28px;
 }
 
@@ -166,26 +203,26 @@ button {
   flex-direction: column;
   gap: 7px;
   font-size: 13px;
-  color: #4e5870;
+  color: var(--muted);
   font-weight: 600;
 }
 
 .control,
 .status-control {
   width: 100%;
-  border: 1px solid #d5dbea;
-  background: #fff;
-  color: #1d2840;
+  border: 1px solid var(--control-border);
+  background: var(--surface);
+  color: var(--text);
   border-radius: 10px;
   padding: 11px 12px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
 .control:focus,
 .status-control:focus {
-  border-color: #6478f7;
-  box-shadow: 0 0 0 3px rgba(100, 120, 247, 0.12);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
 }
 
 .textarea {
@@ -217,18 +254,18 @@ button {
 }
 
 .button-primary {
-  background: #5367e8;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-text);
 }
 
 .button-secondary {
-  background: #eef1f7;
-  color: #33405b;
+  background: var(--secondary-bg);
+  color: var(--secondary-text);
 }
 
 .button-danger {
-  background: #fff0f0;
-  color: #c43f3f;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 .filters-card {
@@ -241,7 +278,7 @@ button {
 }
 
 .task-count {
-  color: #6b7488;
+  color: var(--muted);
   font-size: 13px;
   padding-top: 8px;
 }
@@ -267,12 +304,12 @@ button {
 .task-card h3 {
   margin: 0 0 6px;
   font-size: 18px;
-  color: #1d2840;
+  color: var(--text);
 }
 
 .task-card p {
   margin: 0;
-  color: #6b7488;
+  color: var(--muted);
   line-height: 1.5;
 }
 
@@ -305,7 +342,7 @@ button {
   flex-wrap: wrap;
   gap: 14px;
   margin-top: 16px;
-  color: #6b7488;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -332,8 +369,8 @@ button {
 }
 
 .empty-state {
-  border: 1px dashed #cfd5e2;
-  color: #6b7488;
+  border: 1px dashed var(--control-border);
+  color: var(--muted);
 }
 
 .message {
@@ -342,8 +379,8 @@ button {
 }
 
 .error-message {
-  background: #fff0f0;
-  color: #b13d3d;
+  background: var(--danger-bg);
+  color: var(--danger-text);
 }
 
 .pagination {
@@ -352,21 +389,17 @@ button {
   align-items: center;
   gap: 16px;
   margin-top: 20px;
-  color: #5f6980;
-}
-
-.navbar-logout {
-  width: auto;
+  color: var(--muted);
 }
 
 .container {
   width: min(420px, calc(100% - 32px));
   margin: 80px auto;
-  background: #fff;
+  background: var(--surface);
   padding: 28px;
   border-radius: 16px;
-  border: 1px solid #e4e8f0;
-  box-shadow: 0 12px 34px rgba(22, 35, 65, 0.08);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 .container h1 {
@@ -374,33 +407,12 @@ button {
   margin-bottom: 22px;
 }
 
-.container input,
-.container button {
-  width: 100%;
-  margin-top: 12px;
-}
-
-.container input {
-  padding: 12px;
-  border: 1px solid #d5dbea;
-  border-radius: 10px;
-}
-
-.container button {
-  padding: 12px;
-  border-radius: 10px;
-  background: #5367e8;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 600;
-}
-
 .container p {
-  color: #6b7488;
+  color: var(--muted);
 }
 
 .container a {
-  color: #5367e8;
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -425,6 +437,11 @@ button {
 
   .navbar-inner {
     padding: 12px 14px;
+  }
+
+  .navbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .analytics-grid,

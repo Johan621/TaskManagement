@@ -4,59 +4,95 @@ import API from "../services/api";
 
 function Register() {
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (event) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
   };
 
-  const handleSubmit = async () => {
-    try {
-      await API.post("/auth/register", formData);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-      alert("Registration Successful");
+    if (!formData.name || !formData.email || !formData.password) {
+      setError("Name, email and password are required");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      await API.post("/auth/register", formData);
       navigate("/");
-    } catch (error) {
-      alert(error.response?.data?.message || "Registration Failed");
+    } catch (err) {
+      setError(err.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container">
-      <h1>Register</h1>
+    <div className="container auth-card">
+      <p className="eyebrow">Get started</p>
+      <h1>Create Account</h1>
+      <p className="muted-text">Create an account to start managing tasks.</p>
 
-      <input
-        type="text"
-        name="name"
-        placeholder="Name"
-        onChange={handleChange}
-      />
+      <form onSubmit={handleSubmit} className="task-form">
+        <label>
+          Name
+          <input
+            className="control"
+            type="text"
+            name="name"
+            placeholder="Your name"
+            value={formData.name}
+            onChange={handleChange}
+            autoComplete="name"
+          />
+        </label>
 
-      <input
-        type="email"
-        name="email"
-        placeholder="Email"
-        onChange={handleChange}
-      />
+        <label>
+          Email
+          <input
+            className="control"
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            value={formData.email}
+            onChange={handleChange}
+            autoComplete="email"
+          />
+        </label>
 
-      <input
-        type="password"
-        name="password"
-        placeholder="Password"
-        onChange={handleChange}
-      />
+        <label>
+          Password
+          <input
+            className="control"
+            type="password"
+            name="password"
+            placeholder="At least 6 characters"
+            value={formData.password}
+            onChange={handleChange}
+            autoComplete="new-password"
+          />
+        </label>
 
-      <button onClick={handleSubmit}>
-        Register
-      </button>
+        {error && <div className="message error-message">{error}</div>}
+
+        <button className="button button-primary" type="submit" disabled={loading}>
+          {loading ? "Creating account..." : "Register"}
+        </button>
+      </form>
 
       <p>
         Already have an account? <Link to="/">Login</Link>

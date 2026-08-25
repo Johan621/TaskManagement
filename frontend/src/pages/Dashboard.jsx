@@ -59,11 +59,7 @@ function Dashboard() {
         order,
       };
 
-      const res = await API.get("/tasks", {
-        ...config,
-        params,
-      });
-
+      const res = await API.get("/tasks", { ...config, params });
       setTasks(res.data.tasks);
       setPagination(res.data.pagination);
     } catch (err) {
@@ -76,7 +72,7 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, status, priority, sort, order, handleUnauthorized]);
+  }, [page, search, status, priority, sort, order, token, handleUnauthorized]);
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -87,7 +83,7 @@ function Dashboard() {
         handleUnauthorized();
       }
     }
-  }, [handleUnauthorized]);
+  }, [token, handleUnauthorized]);
 
   useEffect(() => {
     if (!token) {

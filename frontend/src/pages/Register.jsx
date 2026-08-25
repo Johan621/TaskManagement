@@ -1,15 +1,62 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import API from "../services/api";
 
 function Register() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      await API.post("/auth/register", formData);
+
+      alert("Registration Successful");
+      navigate("/");
+    } catch (error) {
+      alert(error.response?.data?.message || "Registration Failed");
+    }
+  };
+
   return (
     <div className="container">
       <h1>Register</h1>
 
-      <input type="text" placeholder="Name" />
-      <input type="email" placeholder="Email" />
-      <input type="password" placeholder="Password" />
+      <input
+        type="text"
+        name="name"
+        placeholder="Name"
+        onChange={handleChange}
+      />
 
-      <button>Register</button>
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        onChange={handleChange}
+      />
+
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        onChange={handleChange}
+      />
+
+      <button onClick={handleSubmit}>
+        Register
+      </button>
 
       <p>
         Already have an account? <Link to="/">Login</Link>

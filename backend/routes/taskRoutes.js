@@ -1,8 +1,21 @@
 const express = require("express");
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.json({ message: "Task route working" });
-});
+const {
+  createTask,
+  getTasks,
+  updateTask,
+  deleteTask,
+} = require("../controllers/taskController");
+
+const { protect } = require("../middleware/authMiddleware");
+
+router.route("/")
+  .post(protect, createTask)
+  .get(protect, getTasks);
+
+router.route("/:id")
+  .put(protect, updateTask)
+  .delete(protect, deleteTask);
 
 module.exports = router;

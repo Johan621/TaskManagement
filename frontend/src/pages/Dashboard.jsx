@@ -1,14 +1,37 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
+import Analytics from "../components/Analytics";
+import Navbar from "../components/Navbar";
+import TaskForm from "../components/TaskForm";
+import TaskList from "../components/TaskList";
+
+const initialAnalytics = {
+  totalTasks: 0,
+  completedTasks: 0,
+  pendingTasks: 0,
+  completionRate: 0,
+};
 
 function Dashboard() {
-  const [tasks, setTasks] = useState([]);
-  const [analytics, setAnalytics] = useState({});
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
+
+  const [tasks, setTasks] = useState([]);
+  const [analytics, setAnalytics] = useState(initialAnalytics);
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("All");
+  const [priority, setPriority] = useState("All");
+  const [sort, setSort] = useState("createdAt");
+  const [order, setOrder] = useState("desc");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    total: 0,
+    totalPages: 1,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const config = {
     headers: {
@@ -16,124 +39,234 @@ function Dashboard() {
     },
   };
 
-  const fetchTasks = async () => {
-    try {
-      const res = await API.get("/tasks", config);
-      setTasks(res.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const handleUnauthorized = useCallback(() => {
+    localStorage.removeItem("token");
+    navigate("/");
+  }, [navigate]);
 
-  const fetchAnalytics = async () => {
+  const fetchTasks = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const params = {
+        page,
+        limit: 6,
+        search,
+        status,
+        priority,
+        sort,
+        order,
+      };
+
+      const res = await API.get("/tasks", {
+        ...config,
+        params,
+      });
+
+      setTasks(res.data.tasks);
+      setPagination(res.data.pagination);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+
+      setError(err.response?.data?.message || "Could not load tasks");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, status, priority, sort, order, handleUnauthorized]);
+
+  const fetchAnalytics = useCallback(async () => {
     try {
       const res = await API.get("/analytics", config);
       setAnalytics(res.data);
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        handleUnauthorized();
+      }
     }
-  };
-
-  const createTask = async () => {
-    try {
-      await API.post(
-        "/tasks",
-        {
-          title,
-          description,
-        },
-        config
-      );
-
-      setTitle("");
-      setDescription("");
-
-      fetchTasks();
-      fetchAnalytics();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const deleteTask = async (id) => {
-    try {
-      await API.delete(`/tasks/${id}`, config);
-
-      fetchTasks();
-      fetchAnalytics();
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  }, [handleUnauthorized]);
 
   useEffect(() => {
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
     fetchTasks();
     fetchAnalytics();
-  }, []);
+  }, [token, navigate, fetchTasks, fetchAnalytics]);
+
+  const handleTaskCreated = async () => {
+    setPage(1);
+    await fetchTasks();
+    await fetchAnalytics();
+  };
+
+  const handleTaskUpdated = async () => {
+    await fetchTasks();
+    await fetchAnalytics();
+  };
+
+  const handleTaskDeleted = async () => {
+    if (tasks.length === 1 && page > 1) {
+      setPage((current) => current - 1);
+      return;
+    }
+
+    await fetchTasks();
+    await fetchAnalytics();
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatus("All");
+    setPriority("All");
+    setSort("createdAt");
+    setOrder("desc");
+    setPage(1);
+  };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Task Dashboard</h1>
+    <div className="app-shell">
+      <Navbar />
 
-      <h2>Analytics</h2>
+      <main className="dashboard-page">
+        <section className="page-heading">
+          <div>
+            <p className="eyebrow">Task workspace</p>
+            <h1>Task Dashboard</h1>
+            <p className="muted-text">
+              Create, organize and track your work in one place.
+            </p>
+          </div>
+        </section>
 
-      <p>Total Tasks: {analytics.totalTasks}</p>
-      <p>Completed Tasks: {analytics.completedTasks}</p>
-      <p>Pending Tasks: {analytics.pendingTasks}</p>
-      <p>Completion Rate: {analytics.completionRate}%</p>
+        <Analytics data={analytics} />
 
-      <hr />
+        <section className="dashboard-grid">
+          <TaskForm onTaskCreated={handleTaskCreated} config={config} />
 
-      <h2>Create Task</h2>
+          <div className="task-section">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">Your tasks</p>
+                <h2>Task List</h2>
+              </div>
+              <span className="task-count">{pagination.total} total</span>
+            </div>
 
-      <input
-        placeholder="Task Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
+            <div className="filters-card">
+              <input
+                className="control"
+                placeholder="Search by title"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value);
+                  setPage(1);
+                }}
+              />
 
-      <br />
-      <br />
+              <select
+                className="control"
+                value={status}
+                onChange={(event) => {
+                  setStatus(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="All">All status</option>
+                <option value="Todo">Todo</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Done">Done</option>
+              </select>
 
-      <input
-        placeholder="Task Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
+              <select
+                className="control"
+                value={priority}
+                onChange={(event) => {
+                  setPriority(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="All">All priority</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
 
-      <br />
-      <br />
+              <select
+                className="control"
+                value={sort}
+                onChange={(event) => {
+                  setSort(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="createdAt">Created date</option>
+                <option value="dueDate">Due date</option>
+                <option value="priority">Priority</option>
+                <option value="title">Title</option>
+              </select>
 
-      <button onClick={createTask}>
-        Add Task
-      </button>
+              <select
+                className="control"
+                value={order}
+                onChange={(event) => {
+                  setOrder(event.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
 
-      <hr />
+              <button className="button button-secondary" onClick={clearFilters}>
+                Clear
+              </button>
+            </div>
 
-      <h2>Tasks</h2>
+            {error && <div className="message error-message">{error}</div>}
 
-      {tasks.map((task) => (
-        <div
-          key={task._id}
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            marginBottom: "10px",
-          }}
-        >
-          <h3>{task.title}</h3>
+            {loading ? (
+              <div className="empty-state">Loading tasks...</div>
+            ) : (
+              <TaskList
+                tasks={tasks}
+                config={config}
+                onTaskUpdated={handleTaskUpdated}
+                onTaskDeleted={handleTaskDeleted}
+              />
+            )}
 
-          <p>{task.description}</p>
+            {!loading && pagination.totalPages > 1 && (
+              <div className="pagination">
+                <button
+                  className="button button-secondary"
+                  disabled={page <= 1}
+                  onClick={() => setPage((current) => current - 1)}
+                >
+                  Previous
+                </button>
 
-          <p>Status: {task.status}</p>
+                <span>
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
 
-          <button
-            onClick={() => deleteTask(task._id)}
-          >
-            Delete
-          </button>
-        </div>
-      ))}
+                <button
+                  className="button button-secondary"
+                  disabled={page >= pagination.totalPages}
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
